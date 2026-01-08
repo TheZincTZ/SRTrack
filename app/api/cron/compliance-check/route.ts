@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSGTDate, formatSGTDate, isAfter10PM } from '@/lib/utils'
+import type { SRTSession, SRTUser } from '@/lib/types'
 
 // This endpoint runs at 10:00 PM SGT daily to check for compliance violations
 // Can be triggered by Vercel Cron or external cron service
@@ -64,7 +65,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Update all violation sessions to RED status
-    const violationIds = violations.map(v => v.id)
+    type ViolationWithUser = SRTSession & { srt_user: SRTUser }
+    const violationIds = violations.map((v: ViolationWithUser) => v.id)
     const { error: updateError } = await supabase
       .from('srt_sessions')
       .update({ status: 'RED' })
@@ -79,9 +81,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Group violations by company for notifications
-    const violationsByCompany: Record<string, typeof violations> = {}
+    const violationsByCompany: Record<string, ViolationWithUser[]> = {}
     for (const violation of violations) {
-      const company = (violation.srt_user as any).company
+      const company = violation.srt_user.company
       if (!violationsByCompany[company]) {
         violationsByCompany[company] = []
       }
