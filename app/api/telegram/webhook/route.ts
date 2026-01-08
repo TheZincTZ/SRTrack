@@ -3,7 +3,7 @@ import TelegramBot from 'node-telegram-bot-api'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getSGTDate, formatSGTDate, getSGTTimeString } from '@/lib/utils'
 import { validateRegistrationData, validateTelegramUserId, sanitizeInput } from '@/lib/validation'
-import type { CompanyType } from '@/lib/types'
+import type { CompanyType, SessionStatus } from '@/lib/types'
 
 // Initialize bot (webhook mode) - lazy initialization for serverless
 let bot: TelegramBot | null = null
@@ -479,24 +479,27 @@ async function handleStatus(bot: TelegramBot, chatId: number, telegramUserId: nu
     return
   }
 
-  const statusEmoji = {
+  const statusEmoji: Record<SessionStatus, string> = {
     CLOCKED_IN: '🟢',
     CLOCKED_OUT: '✅',
     RED: '🔴'
   }
 
+  const sessionStatus = todaySession.status as SessionStatus
+  const emoji = statusEmoji[sessionStatus] || '❓'
+
   let statusText = `📊 Your Status\n\n` +
     `Name: ${user.name}\n` +
     `Rank: ${user.rank}\n` +
     `Company: ${user.company}\n` +
-    `Status: ${statusEmoji[todaySession.status]} ${todaySession.status}\n` +
+    `Status: ${emoji} ${sessionStatus}\n` +
     `Clock In: ${new Date(todaySession.clock_in_time).toLocaleString('en-SG', { timeZone: 'Asia/Singapore' })}`
 
   if (todaySession.clock_out_time) {
     statusText += `\nClock Out: ${new Date(todaySession.clock_out_time).toLocaleString('en-SG', { timeZone: 'Asia/Singapore' })}`
   }
 
-  if (todaySession.status === 'RED') {
+  if (sessionStatus === 'RED') {
     statusText += `\n\n⚠️ WARNING: You did not clock out before 10:00 PM SGT!`
   }
 
