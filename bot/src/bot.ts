@@ -1,4 +1,4 @@
-import TelegramBot from 'node-telegram-bot-api';
+import TelegramBot, { Message, CallbackQuery } from 'node-telegram-bot-api';
 import env from './config/env';
 import { RegistrationHandler } from './handlers/registration.handler';
 import { AttendanceHandler } from './handlers/attendance.handler';
@@ -12,7 +12,7 @@ export const bot = new TelegramBot(env.TELEGRAM_BOT_TOKEN, { polling: false });
  */
 export function initializeBot(): void {
   // Start command
-  bot.onText(/\/start/, async (msg) => {
+  bot.onText(/\/start/, async (msg: Message) => {
     const chatId = msg.chat.id;
     const telegramUserId = msg.from!.id;
 
@@ -40,21 +40,21 @@ export function initializeBot(): void {
   });
 
   // Register command
-  bot.onText(/\/register/, async (msg) => {
+  bot.onText(/\/register/, async (msg: Message) => {
     const chatId = msg.chat.id;
     const telegramUserId = msg.from!.id;
     await RegistrationHandler.startRegistration(bot, chatId, telegramUserId);
   });
 
   // Status command
-  bot.onText(/\/status/, async (msg) => {
+  bot.onText(/\/status/, async (msg: Message) => {
     const chatId = msg.chat.id;
     const telegramUserId = msg.from!.id;
     await AttendanceHandler.handleStatus(bot, chatId, telegramUserId);
   });
 
   // Handle callback queries (buttons)
-  bot.on('callback_query', async (query) => {
+  bot.on('callback_query', async (query: CallbackQuery) => {
     const chatId = query.message!.chat.id;
     const telegramUserId = query.from.id;
     const data = query.data!;
@@ -91,7 +91,7 @@ export function initializeBot(): void {
   });
 
   // Handle text messages (for registration flow)
-  bot.on('message', async (msg) => {
+  bot.on('message', async (msg: Message) => {
     // Skip if command or callback
     if (msg.text?.startsWith('/') || msg.text?.startsWith('reg_company_')) {
       return;

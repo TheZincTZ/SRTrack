@@ -96,14 +96,17 @@ The bot backend **cannot** be hosted on Vercel due to webhook limitations.
    - **Name**: `srtrack-bot` (or your preferred name)
    - **Region**: Choose closest to your users (e.g., Singapore for SGT timezone)
    - **Branch**: `main` (or your default branch)
-   - **Root Directory**: Leave blank (or `bot` if your bot code is in a subdirectory)
+   - **Root Directory**: `bot` ⚠️ **IMPORTANT**: Set this to `bot` since your bot code is in the `bot/` folder
    
    **Runtime Settings**:
    - **Runtime**: Select **Node** (this is critical - do not select Go, Python, etc.)
-   - **Build Command**: `npm install && npm run build`
-     - This installs dependencies and compiles TypeScript to JavaScript
+   - **Build Command**: `NODE_ENV=development npm install && npm run build`
+     - Setting `NODE_ENV=development` ensures devDependencies (TypeScript types) are installed
+     - This installs all dependencies and compiles TypeScript to JavaScript
+     - The build creates the `dist/` folder with compiled JavaScript
    - **Start Command**: `npm start`
      - This runs `node dist/server.js` as defined in package.json
+     - Make sure `dist/server.js` exists after build completes
    
    **Plan**:
    - **Free**: Suitable for development and low traffic

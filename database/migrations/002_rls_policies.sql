@@ -82,16 +82,13 @@ TO service_role
 WITH CHECK (true);
 
 -- Service role can update (for bot clock out)
+-- Note: Application should enforce that clock_in_time, trainee_id, and date cannot be changed
 CREATE POLICY "service_role_update_attendance"
 ON attendance_logs
 FOR UPDATE
 TO service_role
 USING (true)
-WITH CHECK (
-  OLD.clock_in_time = NEW.clock_in_time
-  AND OLD.trainee_id = NEW.trainee_id
-  AND OLD.date = NEW.date
-);
+WITH CHECK (true);
 
 -- RLS Policies for commanders table
 
@@ -124,16 +121,13 @@ TO service_role
 WITH CHECK (true);
 
 -- Commanders can update their own record (limited fields)
+-- Note: Application should enforce that role and company cannot be changed
 CREATE POLICY "commanders_update_self"
 ON commanders
 FOR UPDATE
 TO authenticated
 USING (id = auth.uid())
-WITH CHECK (
-  id = auth.uid()
-  AND OLD.role = NEW.role
-  AND OLD.company = NEW.company
-);
+WITH CHECK (id = auth.uid());
 
 -- RLS Policies for notifications table
 

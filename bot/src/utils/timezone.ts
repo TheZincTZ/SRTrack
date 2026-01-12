@@ -1,4 +1,4 @@
-import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+import { formatInTimeZone, utcToZonedTime } from 'date-fns-tz';
 import env from '../config/env';
 
 const TIMEZONE = env.TIMEZONE;
@@ -7,7 +7,7 @@ const TIMEZONE = env.TIMEZONE;
  * Get current time in SGT
  */
 export function getCurrentSGTTime(): Date {
-  return toZonedTime(new Date(), TIMEZONE);
+  return utcToZonedTime(new Date(), TIMEZONE);
 }
 
 /**
