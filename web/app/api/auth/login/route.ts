@@ -29,13 +29,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify password (in production, use Supabase Auth or bcrypt)
-    // For now, this is a placeholder - implement proper password verification
-    // You should hash passwords using Supabase Auth or bcrypt
+    // Use Supabase Auth for authentication
+    // Email format: username@srtrack.local
+    const email = `${commander.username}@srtrack.local`
     
-    // Create session (simplified - use Supabase Auth in production)
     const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
-      email: commander.username + '@srtrack.local', // Placeholder
+      email: email,
       password: password,
     })
 
@@ -45,6 +44,12 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
+
+    // Update last login time
+    await supabase
+      .from('commanders')
+      .update({ last_login_at: new Date().toISOString() })
+      .eq('id', commander.id)
 
     return NextResponse.json({ success: true })
   } catch (error) {
