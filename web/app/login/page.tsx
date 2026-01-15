@@ -57,11 +57,19 @@ function LoginForm() {
       }
 
       // Update last login time
-      await fetch('/api/auth/update-login-time', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      })
+      try {
+        await fetch('/api/auth/update-login-time', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+      } catch (e) {
+        // Non-critical, continue anyway
+        console.warn('Failed to update login time:', e)
+      }
 
+      // Wait a moment for cookies to be set
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       router.push('/dashboard')
       router.refresh()
     } catch (err: any) {

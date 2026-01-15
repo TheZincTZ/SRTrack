@@ -32,7 +32,13 @@ export async function getCommander() {
     .eq('id', session.user.id)
     .single();
   
-  if (error || !data) {
+  if (error) {
+    console.error('Error fetching commander:', error);
+    redirect('/login');
+  }
+  
+  if (!data) {
+    console.error('Commander not found for user:', session.user.id);
     redirect('/login');
   }
   

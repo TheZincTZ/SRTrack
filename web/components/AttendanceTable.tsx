@@ -48,9 +48,13 @@ export default function AttendanceTable({ commander }: AttendanceTableProps) {
 
       if (response.ok) {
         setData(result.data || [])
+      } else {
+        console.error('Failed to fetch attendance:', result.error)
+        setData([])
       }
     } catch (error) {
       console.error('Failed to fetch attendance:', error)
+      setData([])
     } finally {
       setLoading(false)
     }
@@ -61,7 +65,7 @@ export default function AttendanceTable({ commander }: AttendanceTableProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Attendance Records</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Attendance Records</h2>
         <div className="flex space-x-4">
           {commander.role === 'admin' && (
             <select
