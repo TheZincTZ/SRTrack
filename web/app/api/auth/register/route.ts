@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert commander record
+    // Note: password_hash is stored by Supabase Auth, not in commanders table
     const { error: insertError } = await supabase
       .from('commanders')
       .insert({
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
         company: data.company,
         contact_number: data.contact_number || null,
         username: data.username,
-        password_hash: '', // Not needed when using Supabase Auth
+        password_hash: 'supabase_auth', // Placeholder - password managed by Supabase Auth
         role: data.role,
         is_active: true,
       })
