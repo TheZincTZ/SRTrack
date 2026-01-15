@@ -18,12 +18,21 @@ export async function POST(request: NextRequest) {
     const data = registerSchema.parse(body)
 
     // Use service role client for admin operations
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!supabaseUrl) {
+      console.error('Missing NEXT_PUBLIC_SUPABASE_URL')
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: 'Server configuration error: Missing Supabase URL' },
+        { status: 500 }
+      )
+    }
+    
+    if (!supabaseServiceKey) {
+      console.error('Missing SUPABASE_SERVICE_ROLE_KEY')
+      return NextResponse.json(
+        { error: 'Server configuration error: Missing Supabase Service Role Key. Please add SUPABASE_SERVICE_ROLE_KEY to your Vercel environment variables.' },
         { status: 500 }
       )
     }
@@ -40,7 +49,16 @@ export async function POST(request: NextRequest) {
       .from('commanders')
       .select('id')
       .eq('username', data.username)
-      .single()
+      .maybeSingle()
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      // PGRST116 is "no rows returned" which is fine
+      console.error('Check username error:', checkError)
+      return NextResponse.json(
+        { error: 'Error checking username availability' },
+        { status: 500 }
+      )
+    }
 
     if (existingCommander) {
       return NextResponse.json(
@@ -53,16 +71,35 @@ export async function POST(request: NextRequest) {
     // Use email format: username@srtrack.local
     const email = `${data.username}@srtrack.local`
     
+    // Check if email already exists in Auth (optional, but helpful)
+    try {
+      const { data: existingAuthUser } = await supabase.auth.admin.getUserByEmail(email)
+      if (existingAuthUser?.user) {
+        return NextResponse.json(
+          { error: 'An account with this username already exists' },
+          { status: 400 }
+        )
+      }
+    } catch (e) {
+      // Ignore - user doesn't exist, which is what we want
+    }
+    
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: email,
       password: data.password,
       email_confirm: true, // Auto-confirm email
+      user_metadata: {
+        username: data.username,
+        role: data.role,
+      },
     })
 
     if (authError) {
       console.error('Auth error:', authError)
+      // Return more specific error message
+      const errorMessage = authError.message || 'Failed to create user account'
       return NextResponse.json(
-        { error: 'Failed to create user account' },
+        { error: `Failed to create user account: ${errorMessage}` },
         { status: 500 }
       )
     }
@@ -95,8 +132,9 @@ export async function POST(request: NextRequest) {
       await supabase.auth.admin.deleteUser(authData.user.id)
       
       console.error('Insert error:', insertError)
+      const errorMessage = insertError.message || 'Failed to create commander record'
       return NextResponse.json(
-        { error: 'Failed to create commander record' },
+        { error: `Failed to create commander record: ${errorMessage}` },
         { status: 500 }
       )
     }
