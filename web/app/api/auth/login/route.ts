@@ -2,6 +2,8 @@
 // Keeping for backwards compatibility but it's not used
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   return NextResponse.json(
     { error: 'This endpoint is deprecated. Please use client-side authentication.' },

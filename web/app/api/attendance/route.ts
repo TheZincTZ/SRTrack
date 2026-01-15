@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { getCommander } from '@/lib/auth'
 import { formatToSGT, isPastCutoff } from '@/lib/utils/timezone'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const commander = await getCommander()

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const checkSchema = z.object({
   username: z.string().min(1),
 })

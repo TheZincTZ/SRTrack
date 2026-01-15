@@ -2,6 +2,10 @@ import { redirect } from 'next/navigation'
 import { getCommander } from '@/lib/auth'
 import AttendanceTable from '@/components/AttendanceTable'
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function DashboardPage() {
   try {
     const commander = await getCommander()
