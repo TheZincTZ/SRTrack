@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 
 const checkSchema = z.object({
@@ -11,7 +11,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { username } = checkSchema.parse(body)
 
-    const supabase = createClient()
+    // Use service role client so this check is not blocked by RLS
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing Supabase URL or Service Role Key in check-username route')
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
 
     // Find commander by username
     const { data: commander, error: findError } = await supabase
@@ -19,9 +36,13 @@ export async function POST(request: NextRequest) {
       .select('username')
       .eq('username', username)
       .eq('is_active', true)
-      .single()
+      .maybeSingle()
 
-    if (findError || !commander) {
+    if (findError) {
+      console.error('check-username findError:', findError)
+    }
+
+    if (!commander) {
       return NextResponse.json(
         { error: 'Invalid username' },
         { status: 401 }
