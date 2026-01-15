@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase';
 import { AttendanceLog } from '../types/database';
-import { getCurrentSGTTime, formatToSGT, getTodaySGT, isPastCutoff } from '../utils/timezone';
+import { getCurrentSGTTime, formatToSGT, isPastCutoff } from '../utils/timezone';
 
 export class AttendanceService {
   /**
@@ -40,7 +40,6 @@ export class AttendanceService {
     }
 
     const clockInTime = getCurrentSGTTime();
-    const today = getTodaySGT();
 
     const { data, error } = await supabase
       .from('attendance_logs')
@@ -49,7 +48,8 @@ export class AttendanceService {
         clock_in_time: clockInTime.toISOString(),
         clock_out_time: null,
         status: 'IN',
-        date: today,
+        // Note: 'date' is a GENERATED column - PostgreSQL calculates it automatically from clock_in_time
+        // Do not include 'date' in the insert
         is_overdue: false,
         telegram_update_id: telegramUpdateId,
       })

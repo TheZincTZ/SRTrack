@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { formatToSGT } from '@/lib/utils/timezone'
 
 interface AttendanceRecord {
@@ -25,21 +25,24 @@ interface AttendanceTableProps {
 export default function AttendanceTable({ commander }: AttendanceTableProps) {
   const [data, setData] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedCompany, setSelectedCompany] = useState<string>(commander.company)
+  // For commanders, use their company. For admins, default to 'all'
+  const [selectedCompany, setSelectedCompany] = useState<string>(
+    commander.role === 'admin' ? 'all' : commander.company
+  )
   const [selectedDate, setSelectedDate] = useState<string>(formatToSGT(new Date(), 'yyyy-MM-dd'))
 
-  useEffect(() => {
-    fetchAttendance()
-  }, [selectedCompany, selectedDate])
+  // Memoize commander props to prevent unnecessary re-renders
+  const commanderRole = useMemo(() => commander.role, [commander.role])
+  const commanderCompany = useMemo(() => commander.company, [commander.company])
 
-  const fetchAttendance = async () => {
+  const fetchAttendance = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
         date: selectedDate,
       })
       
-      if (commander.role === 'admin' && selectedCompany !== 'all') {
+      if (commanderRole === 'admin' && selectedCompany !== 'all') {
         params.append('company', selectedCompany)
       }
 
@@ -58,7 +61,11 @@ export default function AttendanceTable({ commander }: AttendanceTableProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedCompany, selectedDate, commanderRole])
+
+  useEffect(() => {
+    fetchAttendance()
+  }, [fetchAttendance])
 
   const companies = ['A', 'B', 'C', 'Support', 'MSC', 'HQ']
 
