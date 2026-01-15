@@ -26,26 +26,46 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-      
-      // Note: This is a simplified login. In production, you should use Supabase Auth
-      // For now, we'll authenticate via API route
-      const response = await fetch('/api/auth/login', {
+      // First, get the commander to find the email
+      const checkResponse = await fetch('/api/auth/check-username', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username }),
       })
 
-      const data = await response.json()
+      const checkData = await checkResponse.json()
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed')
+      if (!checkResponse.ok || !checkData.email) {
+        throw new Error('Invalid username or password')
       }
+
+      // Now authenticate with Supabase Auth on client side
+      const supabase = createClient()
+      const email = checkData.email
+      
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      })
+
+      if (authError) {
+        throw new Error('Invalid username or password')
+      }
+
+      if (!authData.session) {
+        throw new Error('Failed to create session')
+      }
+
+      // Update last login time
+      await fetch('/api/auth/update-login-time', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
 
       router.push('/dashboard')
       router.refresh()
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || 'Login failed')
     } finally {
       setLoading(false)
     }
