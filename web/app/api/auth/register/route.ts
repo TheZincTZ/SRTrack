@@ -71,19 +71,6 @@ export async function POST(request: NextRequest) {
     // Use email format: username@srtrack.local
     const email = `${data.username}@srtrack.local`
     
-    // Check if email already exists in Auth (optional, but helpful)
-    try {
-      const { data: existingAuthUser } = await supabase.auth.admin.getUserByEmail(email)
-      if (existingAuthUser?.user) {
-        return NextResponse.json(
-          { error: 'An account with this username already exists' },
-          { status: 400 }
-        )
-      }
-    } catch (e) {
-      // Ignore - user doesn't exist, which is what we want
-    }
-    
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: email,
       password: data.password,
@@ -96,6 +83,13 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       console.error('Auth error:', authError)
+      // Check if user already exists
+      if (authError.message?.includes('already registered') || authError.message?.includes('already exists')) {
+        return NextResponse.json(
+          { error: 'An account with this username already exists' },
+          { status: 400 }
+        )
+      }
       // Return more specific error message
       const errorMessage = authError.message || 'Failed to create user account'
       return NextResponse.json(
