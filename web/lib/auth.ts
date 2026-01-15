@@ -23,25 +23,30 @@ export async function requireAuth() {
 }
 
 export async function getCommander() {
-  const session = await requireAuth();
-  const supabase = createClient();
-  
-  const { data, error } = await supabase
-    .from('commanders')
-    .select('*')
-    .eq('id', session.user.id)
-    .single();
-  
-  if (error) {
-    console.error('Error fetching commander:', error);
-    redirect('/login');
+  try {
+    const session = await requireAuth();
+    const supabase = createClient();
+    
+    const { data, error } = await supabase
+      .from('commanders')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching commander:', error);
+      return null;
+    }
+    
+    if (!data) {
+      console.error('Commander not found for user:', session.user.id);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error in getCommander:', error);
+    return null;
   }
-  
-  if (!data) {
-    console.error('Commander not found for user:', session.user.id);
-    redirect('/login');
-  }
-  
-  return data;
 }
 

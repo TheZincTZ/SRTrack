@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -68,10 +67,10 @@ function LoginForm() {
       }
 
       // Wait a moment for cookies to be set
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await new Promise(resolve => setTimeout(resolve, 200))
       
-      router.push('/dashboard')
-      router.refresh()
+      // Use window.location for a full page reload to ensure cookies are synced
+      window.location.href = '/dashboard'
     } catch (err: any) {
       setError(err.message || 'Login failed')
     } finally {
